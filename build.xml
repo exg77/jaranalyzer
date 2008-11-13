@@ -1,0 +1,138 @@
+<project name="JarAnalyzer" default="dist" basedir=".">
+
+    <property name="src"        location="${basedir}/src"/>
+    <property name="test"       location="${basedir}/test"/>
+    <property name="build"      location="${basedir}/build"/>
+    <property name="buildtest"  location="${basedir}/buildtest"/>
+    <property name="bindist"    location="${basedir}/bin"/>
+    <property name="lib"        location="${basedir}/lib"/>
+    <property name="srcdist"    location="${basedir}/srcdist"/>
+    <property name="testdata"   location="${basedir}/testdata"/>
+    <property name="deploy"     location="${basedir}/deploy"/>
+    <property name="docs"       location="${basedir}/docs" />
+    <property name="javadoc.dir"    location="${docs}/api" />
+    <property name="version"        value="1.2"/>
+    <property name="app.package"    value="com.kirkk.analyzer"/>
+    
+    <path id="project.class.path">
+        <pathelement path="src"/>
+        <pathelement location="${lib}/bcel-5.2.jar"/>
+        <pathelement location="${lib}/jakarta-regexp-1.3.jar"/>
+    </path>
+    
+    <target name="clean" description="clean up">
+        <delete dir="${bindist}"/>
+        <delete dir="${deploy}"/>
+        <delete dir="${build}"/>
+        <delete dir="${buildtest}"/>
+    </target>
+    
+    <target name="init" depends="clean">
+        <tstamp/>
+        <mkdir dir="${build}"/>
+        <mkdir dir="${buildtest}"/>
+    </target>
+    
+    <target name="compile" depends="init">
+        <javac srcdir="${src}" destdir="${build}" source="1.4" target="1.4">
+            <classpath refid="project.class.path"/>
+        </javac>
+    </target>
+    
+    <target name="compiletest" depends="compile">
+        <javac srcdir="${test}" destdir="${buildtest}">
+            <classpath>
+                <pathelement location="${test}"/>
+                <pathelement location="${build}"/>
+                <pathelement location="${lib}/bcel-5.2.jar"/>
+                <pathelement location="${lib}/jakarta-regexp-1.3.jar"/>
+            </classpath>
+        </javac>
+    </target>
+    
+     <target name="test" depends="compiletest">
+        <junit haltonfailure="yes" printsummary="yes" >
+            <classpath>
+                <pathelement location="${buildtest}"/>
+                <pathelement location="${build}"/>
+                <pathelement location="${lib}/bcel-5.2.jar"/>
+                <pathelement location="${lib}/jakarta-regexp-1.3.jar"/>
+          </classpath>
+          
+            <test name="com.kirkk.analyzer.test.AllTests" haltonfailure="yes" outfile="result">
+                <formatter type="xml"/>
+          </test>
+        </junit>
+    </target>
+    
+    <target name="javadoc" depends="compile"
+        description="Generate the JavaDoc">
+        
+        <mkdir dir="${javadoc.dir}" />
+
+        <javadoc packagenames="${app.package}.*"
+            sourcepath="${src}"
+            destdir="${javadoc.dir}"
+            author="true"
+            windowtitle="JarAnalyzer API"
+            doctitle="JarAnalyzer API"
+            bottom="Copyright &#169; 2006 Kirk Knoernschild">
+            <classpath refid="project.class.path" />
+        </javadoc>
+    </target>
+    
+    <target name="dist" depends="test, javadoc">
+        <mkdir dir="${bindist}"/>
+        <jar jarfile="${bindist}/jaranalyzer-${version}.jar" basedir="${build}"/>
+        <mkdir dir="${bindist}/lib"/>
+        <mkdir dir="${bindist}/docs"/>
+        <copy file="${basedir}/runxmlsummary.bat" todir="${bindist}"/>
+        <copy file="${basedir}/rundotsummary.bat" todir="${bindist}"/>
+        <copy file="${basedir}/jaranalyzer.xsl" todir="${bindist}"/>
+        <copy file="${basedir}/license.txt" todir="${bindist}"/>
+        <copy file="${basedir}/readme.txt" todir="${bindist}"/>
+        <copy todir="${bindist}/lib">
+            <fileset dir="${lib}"/>
+        </copy>
+        <copy todir="${bindist}/docs">
+            <fileset dir="${docs}"/>
+        </copy>
+        
+        <mkdir dir="${srcdist}"/>
+        <mkdir dir="${srcdist}/lib"/>
+        <mkdir dir="${srcdist}/src"/>
+        <mkdir dir="${srcdist}/test"/>
+        <mkdir dir="${srcdist}/testdata"/>
+        <mkdir dir="${srcdist}/docs"/>
+        
+        <copy todir="${srcdist}/lib">
+            <fileset dir="${lib}"/>
+        </copy>
+        <copy todir="${srcdist}/src">
+            <fileset dir="${src}"/>
+        </copy>
+        <copy todir="${srcdist}/test">
+            <fileset dir="${test}"/>
+        </copy>
+        <copy todir="${srcdist}/testdata">
+            <fileset dir= "${testdata}"/>
+        </copy>
+        <copy file="${basedir}/build.xml" todir="${srcdist}"/>
+        <copy file="${basedir}/runxmlsummary.bat" todir="${srcdist}"/>
+        <copy file="${basedir}/jaranalyzer.xsl" todir="${srcdist}"/>
+        <copy file="${basedir}/rundotsummary.bat" todir="${srcdist}"/>
+        <copy file="${basedir}/license.txt" todir="${srcdist}"/>
+        <copy file="${basedir}/readme.txt" todir="${srcdist}"/>
+        <copy todir="${srcdist}/docs">
+            <fileset dir="${docs}"/>
+        </copy>
+        
+        
+        <mkdir dir="${deploy}"/>
+        <zip destfile="${deploy}/JarAnalyzer-${version}.zip" basedir="${bindist}"/>
+        <zip destfile="${deploy}/JarAnalyzer-src-${version}.zip" basedir="${srcdist}"/>
+        <delete dir="${srcdist}"/>
+    </target>
+    
+    
+</project>
